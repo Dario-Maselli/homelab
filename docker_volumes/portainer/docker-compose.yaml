@@ -18,5 +18,5 @@ services:
       - "9001:9001"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "D:/14-Portainer_Agent:/data"
+      - "D:/14-Portainer:/data"
 
