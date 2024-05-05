@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  cloudflare-ddns:
+    image: oznu/cloudflare-ddns:latest
+    restart: unless-stopped
+    environment:
+      - API_KEY=RC9457FE_MoaI9xPIbnVI_AxGq0BPIrGX0XED128
+      - ZONE=neroserver.xyz
+      - PROXIED=true
+      # - PUID=998
+      # - PGID=100
