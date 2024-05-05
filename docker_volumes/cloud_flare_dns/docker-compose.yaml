@@ -8,3 +8,8 @@ services:
       - PROXIED=true
       # - PUID=998
       # - PGID=100
+      
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token eyJhIjoiNzg4NDFkNDkyYzdiNGY3M2NlNmFlY2MwNjZhZTAwMjkiLCJ0IjoiYTIxZTllY2EtYThhNy00MGJmLWFlNjMtZDRjMDJlYjc4ZTMzIiwicyI6IlpHWm1Oamt5WW1VdE1UYzJZUzAwTXpkaExXRXpZV1V0T0RnMFltRmxNbUl6TVdaaCJ9
+    restart: unless-stopped
