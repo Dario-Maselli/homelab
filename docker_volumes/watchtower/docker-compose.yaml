@@ -1,6 +1,7 @@
 services:
   watchtower:
     container_name: watchtower
+    restart: always
     image: containrrr/watchtower
     # ports:
     #   - 5000:8080
