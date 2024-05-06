@@ -1,0 +1,765 @@
+appConfig:
+  customCss: 'p.ip-address { display: none; }'
+  layout: auto
+  iconSize: medium
+  theme: one-dark
+  language: en
+  startingView: default
+  defaultOpeningMethod: newtab
+  statusCheck: true
+  statusCheckInterval: 30
+  faviconApi: duckduckgo
+  routingMode: history
+  enableMultiTasking: true
+  widgetsAlwaysUseProxy: true
+  webSearch:
+    disableWebSearch: false
+    searchEngine: duckduckgo
+    openingMethod: newtab
+    searchBangs: {}
+  enableFontAwesome: true
+  hideComponents:
+    hideHeading: true
+    hideNav: true
+    hideSearch: false
+    hideSettings: false
+    hideFooter: false
+  showSplashScreen: false
+  preventWriteToDisk: false
+  preventLocalSave: false
+  disableConfiguration: false
+  allowConfigEdit: true
+  enableServiceWorker: true
+  disableContextMenu: false
+  disableUpdateChecks: false
+  disableSmartSort: false
+  enableErrorReporting: true
+pageInfo:
+  title: Dashy
+  description: ''
+  navLinks: []
+  footerText: Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.
+sections:
+  - name: home
+    icon: fas fa-house
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    widgets:
+      - type: public-ip
+        id: 0_425_publicip
+    items:
+      - title: cctv
+        description: frigate
+        icon: hl-frigate
+        url: http://192.168.1.103:5000/
+        target: modal
+        id: 0_425_cctv
+      - title: main
+        description: home assistant
+        icon: hl-home-assistant
+        url: https://ha.o5.ddns.net/lovelace-desktop/default_view
+        target: modal
+        id: 1_425_main
+      - title: kitchen
+        description: home assistant 2
+        icon: hl-home-assistant
+        url: https://ha2.o5.ddns.net
+        target: modal
+        id: 2_425_kitchen
+      - title: bedroom
+        description: home assistant 3
+        icon: hl-home-assistant
+        url: https://ha3.o5.ddns.net
+        target: modal
+        id: 3_425_bedroom
+      - title: zigbee
+        description: zigbee2mqtt
+        icon: hl-zigbee2mqtt
+        url: http://192.168.1.249:8890/#/dashboard
+        target: modal
+        id: 4_425_zigbee
+      - title: radar24
+        description: flightradar24
+        icon: fas fa-plane
+        url: http://192.168.1.212/dump1090/
+        target: modal
+        id: 5_425_radar
+      - title: aware
+        description: flightaware
+        icon: fas fa-plane
+        url: http://192.168.1.212:8080/
+        target: modal
+        id: 6_425_aware
+  - name: admin
+    icon: fas fa-bars
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: remote
+        description: guacamole
+        icon: hl-guacamole
+        url: https://guac.o5.ddns.net/
+        target: modal
+        id: 0_521_remote
+      - title: ssh
+        description: sschwifty
+        icon: sschwifty.png
+        url: https://192.168.1.142:8189/
+        target: newtab
+        statusCheckAllowInsecure: true
+        statusCheckAcceptCodes: '401'
+        id: 1_521_ssh
+      - title: docker
+        description: portainer
+        icon: hl-portainer
+        url: http://port.o5.ddns.net/
+        target: modal
+        id: 2_521_docker
+      - title: docker logs
+        description: dozzle
+        icon: hl-dozzle
+        url: http://192.168.1.249:4999/
+        target: modal
+        id: 3_521_dockerlogs
+      - title: logs
+        description: graylog
+        icon: graylog.png
+        url: http://192.168.1.249:9000/dashboards/5f54ca666c56110bfdab36c7
+        target: modal
+        id: 4_521_logs
+      - title: pve2
+        description: proxmox virtual environment
+        icon: hl-proxmox
+        url: https://192.168.1.165:8006/
+        statusCheckAllowInsecure: true
+        id: 5_521_pve
+      - title: pbs
+        description: proxmox backup server
+        icon: hl-proxmox
+        url: https://192.168.1.246:8007/
+        statusCheckAllowInsecure: true
+        id: 6_521_pbs
+      - title: ipmi
+        description: supermicro
+        icon: fas fa-server
+        url: https://192.168.1.208/
+        statusCheckAllowInsecure: true
+        id: 7_521_ipmi
+      - title: fr24 feeder
+        description: flightradar24 feeder status
+        icon: hl-flightradar24
+        url: http://192.168.1.212:8754/index.html
+        target: modal
+        id: 8_521_frfeeder
+      - title: ups
+        description: nut
+        icon: fas fa-car-battery
+        url: https://0.o5.ddns.net/cgi-bin/nut/upsstats.cgi
+        target: modal
+        id: 9_521_ups
+  - name: monitoring
+    icon: fas fa-tachometer
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: nms
+        description: librenms
+        icon: hl-librenms
+        url: http://192.168.1.249:8161/
+        target: modal
+        statusCheckAcceptCodes: '401'
+        id: 0_1094_nms
+      - title: checks
+        description: healthchecks.io
+        icon: hl-healthchecks
+        url: >-
+          https://healthchecks.io/projects/a5499f68-4337-45b4-ad5e-8db7df6e3136/checks/
+        id: 1_1094_checks
+      - title: pve2
+        description: 'glances '
+        icon: hl-glances
+        url: http://192.168.1.165:61208/
+        target: modal
+        id: 2_1094_pve
+      - title: vm-docker
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.249:61208
+        target: modal
+        id: 3_1094_vmdocker
+      - title: pi 1
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.101:61208
+        target: modal
+        id: 4_1094_pi
+      - title: pi 2
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.102:61208
+        target: modal
+        id: 5_1094_pi
+      - title: pi 3
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.212:61208
+        target: modal
+        id: 6_1094_pi
+      - title: pbs
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.246:61208/
+        target: modal
+        id: 7_1094_pbs
+      - title: gaming pc
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.163:61208/
+        target: modal
+        id: 8_1094_gamingpc
+      - title: media pc
+        description: glances
+        icon: hl-glances
+        url: http://192.168.1.129:61208/
+        target: modal
+        id: 9_1094_mediapc
+  - name: network
+    icon: fas fa-network-wired
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: router
+        description: openwrt
+        icon: fas fa-router
+        url: https://192.168.1.1
+        statusCheckAllowInsecure: true
+        id: 0_778_router
+      - title: switch
+        description: zyxel
+        icon: fas fa-ethernet
+        url: http://192.168.1.175/cgi-bin/dispatcher.cgi?cmd=0
+        id: 1_778_switch
+      - title: pi-hole
+        description: Pi-Hole 1
+        icon: hl-pihole
+        url: http://192.168.1.101/admin/index.php
+        id: 2_778_pihole
+      - title: pi-hole2
+        description: Pi-Hole 2
+        icon: hl-pihole
+        url: http://192.168.1.102/admin/index.php
+        id: 3_778_pihole
+      - title: pi-hole3
+        description: Pi-Hole 3
+        icon: hl-pihole
+        url: http://192.168.1.212:7070/admin/index.php
+        id: 4_778_pihole
+      - title: proxy
+        description: nginx-proxy-manager
+        icon: hl-nginxproxymanager
+        url: http://192.168.1.101:81/
+        target: modal
+        id: 5_778_proxy
+      - title: ddns
+        description: ddns-updater
+        icon: ddns-updater.png
+        url: http://192.168.1.237:8987/
+        target: modal
+        id: 6_778_ddns
+      - title: netboot
+        description: netboot.xyz
+        icon: hl-netbootxyz
+        url: http://192.168.1.249:3000/
+        target: modal
+        id: 7_778_netboot
+      - title: wg-easy
+        description: wireguard
+        icon: hl-wireguard
+        url: http://192.168.1.102:51821/
+        id: 8_778_wgeasy
+  - name: media
+    icon: fas fa-album-collection
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: movies
+        description: radarr
+        icon: hl-radarr
+        url: http://192.168.1.249:7878/
+        target: modal
+        id: 0_512_movies
+      - title: tv shows
+        description: sonarr
+        icon: hl-sonarr
+        url: http://192.168.1.249:8989/
+        target: modal
+        id: 1_512_tvshows
+      - title: music
+        description: lidarr
+        icon: lidarr.png
+        url: http://192.168.1.249:8686/
+        target: modal
+        id: 2_512_music
+      - title: jelly
+        description: jellyfin
+        icon: hl-jellyfin
+        url: http://192.168.1.249:8096/
+        target: modal
+        id: 3_512_jelly
+      - title: sonic
+        description: airsonic
+        icon: hl-airsonic
+        url: http://192.168.1.249:4040/
+        id: 4_512_sonic
+      - title: subtitles
+        description: bazarr
+        icon: hl-bazarr
+        url: http://192.168.1.249:6767/
+        target: modal
+        id: 5_512_subtitles
+      - title: books
+        description: calibre-web
+        icon: hl-calibreweb
+        url: http://192.168.1.249:8983/
+        target: modal
+        id: 6_512_books
+      - title: encode
+        description: handbrake
+        icon: hl-handbrake
+        url: http://192.168.1.249:5860/
+        target: modal
+        id: 7_512_encode
+  - name: data
+    icon: fas fa-file
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: cloud
+        description: nextcloud
+        icon: nextcloud.png
+        url: https://turbomrak.o5.ddns.net
+        id: 0_410_cloud
+      - title: nas
+        description: truenas
+        icon: hl-truenas
+        url: https://turbofreenas.lan/
+        statusCheckAllowInsecure: true
+        id: 1_410_nas
+      - title: paste
+        description: privatebin
+        icon: hl-privatebin
+        url: https://paste.o5.ddns.net/
+        id: 2_410_paste
+      - title: shlink
+        description: shlink
+        icon: hl-shlink
+        url: >-
+          http://192.168.1.249:4567/server/563ece64-57f2-479e-97d5-14602fc61cea/overview
+        target: modal
+        id: 3_410_shlink
+      - title: influx
+        description: influxb
+        icon: hl-influxdb
+        url: http://192.168.1.249:8086/
+        target: modal
+        id: 4_410_influx
+  - name: d/l
+    icon: fas fa-download
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: torrents
+        description: qbittorrent
+        icon: hl-qbittorrent
+        url: http://192.168.1.249:8532/
+        id: 0_255_torrents
+      - title: archive
+        description: tube archivist
+        icon: tube-archivist.png
+        url: http://192.168.1.249:8543/downloads/
+        id: 1_255_archive
+      - title: jdl2
+        description: jdownloader2
+        icon: hl-jdownloader
+        url: http://192.168.1.249:5850/
+        target: modal
+        id: 2_255_jdl
+      - title: request
+        description: ombi
+        icon: hl-ombi
+        url: http://192.168.1.249:3579/
+        target: modal
+        id: 3_255_request
+      - title: trackers
+        description: prowlarr
+        icon: hl-prowlarr
+        url: http://192.168.1.249:9696/
+        target: modal
+        id: 4_255_trackers
+  - name: mail
+    icon: fas fa-envelope
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: inbox rc
+        description: roundcube
+        icon: hl-roundcube
+        url: https://scp-mail.net/rc/?_task=mail&_mbox=INBOX
+        id: 0_419_inboxrc
+      - title: inbox sogo
+        description: sogo
+        icon: favicon
+        url: https://scp-mail.net/SOGo/so/o5@scp-mail.net/Mail/view#!/Mail/0/INBOX
+        id: 1_419_inboxsogo
+      - title: inbox nc
+        description: mail nextcloud
+        icon: nextcloud.png
+        url: https://turbomrak.o5.ddns.net/apps/mail/box/priority
+        statusCheckAcceptCodes: '401'
+        id: 2_419_inboxnc
+      - title: rspamd
+        description: rspamd ui
+        icon: hl-rspamd
+        url: https://scp-mail.net/rspamd/
+        id: 3_419_rspamd
+      - title: admin
+        description: mailcow ui
+        icon: hl-mailcow
+        url: https://scp-mail.net/
+        id: 4_419_admin
+  - name: pve2
+    icon: fas fa-server
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 0_381_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 1_381_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 2_381_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 3_381_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 4_381_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 5_381_gldiskio
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.165:61208
+        id: 6_381_glnetworkinterfaces
+  - name: vm-docker
+    icon: fas fa-server
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 0_904_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 1_904_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 2_904_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 3_904_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 4_904_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 5_904_gldiskio
+      - type: gl-ip-address
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 6_904_glipaddress
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.249:61208
+        id: 7_904_glnetworkinterfaces
+  - name: pi-hole
+    icon: fas fa-microchip
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 0_686_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 1_686_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 2_686_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 3_686_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 4_686_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 5_686_gldiskio
+      - type: gl-ip-address
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 6_686_glipaddress
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.101:61208
+        id: 7_686_glnetworkinterfaces
+  - name: pi-hole2
+    icon: fas fa-microchip
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 0_736_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 1_736_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 2_736_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 3_736_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 4_736_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 5_736_gldiskio
+      - type: gl-ip-address
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 6_736_glipaddress
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.102:61208
+        id: 7_736_glnetworkinterfaces
+  - name: fr24
+    icon: fas fa-microchip
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 0_318_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 1_318_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 2_318_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 3_318_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 4_318_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 5_318_gldiskio
+      - type: gl-ip-address
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 6_318_glipaddress
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.212:61208
+        id: 7_318_glnetworkinterfaces
+  - name: pbs
+    icon: fas fa-server
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 0_325_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 1_325_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 2_325_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 3_325_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 4_325_gldiskspace
+      - type: gl-disk-io
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 5_325_gldiskio
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.246:61208
+        id: 6_325_glnetworkinterfaces
+  - name: gaming pc
+    icon: fas fa-gamepad
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 0_870_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 1_870_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 2_870_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 3_870_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 4_870_gldiskspace
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.163:61208
+        id: 5_870_glnetworkinterfaces
+  - name: media pc
+    icon: fas fa-film
+    displayData:
+      rows: 1
+      sortBy: default
+      cols: 2
+      collapsed: true
+      hideForGuests: false
+    widgets:
+      - type: gl-alerts
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 0_755_glalerts
+      - type: gl-current-cpu
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 1_755_glcurrentcpu
+      - type: gl-current-mem
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 2_755_glcurrentmem
+      - type: gl-system-load
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 3_755_glsystemload
+      - type: gl-disk-space
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 4_755_gldiskspace
+      - type: gl-network-interfaces
+        options:
+          hostname: http://192.168.1.129:61208
+        id: 5_755_glnetworkinterfaces

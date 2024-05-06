@@ -1,4 +1,26 @@
 services:
+  dashy:
+    image: lissy93/dashy
+    container_name: Dashy
+    ports:
+      - 4000:8080
+    # Set any environmental variables
+    environment:
+      - NODE_ENV=production
+    # Specify your user ID and group ID. You can find this by running `id -u` and `id -g`
+    #  - UID=1000
+    #  - GID=1000
+    restart: unless-stopped
+    volumes:
+      - ./dashy-config.yml:/app/user-data/conf.yml
+    # Configure healthchecks
+    healthcheck:
+      test: ['CMD', 'node', '/app/services/healthcheck']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  
   cloudflare-ddns:
     container_name: cloudflare-ddns
     image: oznu/cloudflare-ddns:latest
