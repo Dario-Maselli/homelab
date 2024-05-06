@@ -1,0 +1,95 @@
+services:
+  overseerr:
+    image: sctx/overseerr:latest
+    container_name: overseerr
+    environment:
+      - LOG_LEVEL=debug
+      - TZ=Africa/Johannesburg
+      - PORT=5055
+    ports:
+      - 5055:5055
+    volumes:
+      - d:/homelab-data-1/overseerr/app/config:/app/config
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+    volumes:
+      - D:/homelab/sonarr/config:/config
+      - D:/homelab-data-1/plex:/homelab-data-1
+      - E:/homelab-data-2/plex:/homelab-data-2
+      - F:/homelab-data-3/plex:/homelab-data-3
+      - G:/homelab-data-4/plex:/homelab-data-4
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+    volumes:
+      - D:/homelab/radarr/config:/config
+      - D:/homelab-data-1/plex:/homelab-data-1
+      - E:/homelab-data-2/plex:/homelab-data-2
+      - F:/homelab-data-3/plex:/homelab-data-3
+      - G:/homelab-data-4/plex:/homelab-data-4
+    ports:
+      - 7878:7878
+    restart: unless-stopped   
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+    volumes:
+      - D:/homelab/prowlarr/config:/config
+    ports:
+      - 9696:9696
+    restart: unless-stopped
+
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - D:/homelab/deluge/config:/config
+      - D:/homelab-data-1/deluge/downloads:/downloads
+      - D:/homelab-data-1/plex:/homelab-data-1
+      - E:/homelab-data-2/plex:/homelab-data-2
+      - F:/homelab-data-3/plex:/homelab-data-3
+      - G:/homelab-data-4/plex:/homelab-data-4
+    ports:
+      - 8112:8112
+      - 6881:6881
+      - 6881:6881/udp
+      - 58846:58846 #optional
+    restart: unless-stopped
+
+  flaresolverr:
+    # DockerHub mirror flaresolverr/flaresolverr:latest
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=Africa/Johannesburg
+    ports:
+      - "${PORT:-8191}:8191"
+    restart: unless-stopped 

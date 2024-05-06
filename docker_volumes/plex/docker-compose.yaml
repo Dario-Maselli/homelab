@@ -1,0 +1,40 @@
+services:
+  plex:
+    container_name: plex
+    image: plexinc/pms-docker
+    restart: unless-stopped
+    ports:
+      - 32401:32400/tcp
+      - 8325:8324/tcp
+      - 32470:32469/tcp
+      - 1901:1900/udp
+      - 32420:32410/udp
+      - 32422:32412/udp
+      - 32423:32413/udp
+      - 32424:32414/udp
+    environment:
+      - TZ=Africa/Johannesburg
+      - PLEX_CLAIM=claim-_E9aj66E3Y5RLEbA4Xkb
+      - ADVERTISE_IP=http://192.168.0.110:32401/
+    hostname: NeroServerV3
+    volumes:
+      - d:/homelab/plex:/config
+      - d:/homelab/plex_transcode:/transcode
+      - d:/homelab/plex_media:/data
+      - d:/homelab-data-1/plex:/homelab-data-1
+      - e:/homelab-data-2/plex:/homelab-data-2
+      - f:/homelab-data-3/plex:/homelab-data-3
+      - g:/homelab-data-4/plex:/homelab-data-4
+
+  tautulli:
+    container_name: tautulli
+    restart: unless-stopped
+    image: lscr.io/linuxserver/tautulli:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+    volumes:
+      - d:/homelab/tautulli:/config
+    ports:
+      - 8181:8181
