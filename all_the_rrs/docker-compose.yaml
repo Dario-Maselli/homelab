@@ -25,8 +25,9 @@ services:
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
+      - D:/homelab-data-1/deluge/downloads:/downloads
     ports:
-      - 8989:8989
+      - 5555:8989
     restart: unless-stopped
 
   radarr:
@@ -42,8 +43,9 @@ services:
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
+      - D:/homelab-data-1/deluge/downloads:/downloads
     ports:
-      - 7878:7878
+      - 4444:7878
     restart: unless-stopped   
 
   prowlarr:
@@ -59,27 +61,82 @@ services:
       - 9696:9696
     restart: unless-stopped
 
-  deluge:
-    image: lscr.io/linuxserver/deluge:latest
-    container_name: deluge
+  # deluge:
+  #   image: lscr.io/linuxserver/deluge:latest
+  #   container_name: deluge
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Africa/Johannesburg
+  #     - DELUGE_LOGLEVEL=error #optional
+  #   volumes:
+  #     - D:/homelab/deluge/config:/config
+  #     - D:/homelab-data-1/deluge/downloads:/downloads
+  #     - D:/homelab-data-1/plex:/homelab-data-1
+  #     - E:/homelab-data-2/plex:/homelab-data-2
+  #     - F:/homelab-data-3/plex:/homelab-data-3
+  #     - G:/homelab-data-4/plex:/homelab-data-4
+  #   ports:
+  #     - 8112:8112
+  #     - 6881:6881
+  #     - 6881:6881/udp
+  #     - 58846:58846 #optional
+  #   restart: unless-stopped
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Africa/Johannesburg
-      - DELUGE_LOGLEVEL=error #optional
     volumes:
-      - D:/homelab/deluge/config:/config
-      - D:/homelab-data-1/deluge/downloads:/downloads
-      - D:/homelab-data-1/plex:/homelab-data-1
-      - E:/homelab-data-2/plex:/homelab-data-2
-      - F:/homelab-data-3/plex:/homelab-data-3
-      - G:/homelab-data-4/plex:/homelab-data-4
+      - D:/homelab/bazarr/config:/config
+      - D:/homelab-data-1/plex/series:/series
+      - E:/homelab-data-2/plex/series:/series
+      - F:/homelab-data-3/plex/series:/series
+      - G:/homelab-data-4/plex/series:/series
+      - D:/homelab-data-1/plex/movies:/movies
+      - E:/homelab-data-2/plex/movies:/movies
+      - F:/homelab-data-3/plex/movies:/movies
+      - G:/homelab-data-4/plex/movies:/movies
     ports:
-      - 8112:8112
+      - 6767:6767
+    restart: unless-stopped
+
+  qbittorrent:
+    restart: unless-stopped
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Africa/Johannesburg
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - D:/homelab/qbittorrent/config:/config
+      - D:/homelab-data-1/qbittorrent/downloads:/downloads
+    ports:
+      - 8080:8080
       - 6881:6881
       - 6881:6881/udp
-      - 58846:58846 #optional
+
+  handbrake:
     restart: unless-stopped
+    container_name: handbrake
+    image: jlesage/handbrake:latest
+    ports:
+      - "5800:5800"
+    volumes:
+      - D:/homelab/handbrake:/config:rw
+      - D:/homelab-data-1/handbrake/storage:/storage:ro
+      # - D:/homelab-data-1/deluge/downloads:/watch:rw
+      - D:/homelab-data-1/deluge/downloads:/output:rw
+      - D:/homelab-data-1/plex:/watch:rw
+      - E:/homelab-data-2/plex:/watch:rw
+      - F:/homelab-data-3/plex:/watch:rw
+      - G:/homelab-data-4/plex:/watch:rw
 
   flaresolverr:
     # DockerHub mirror flaresolverr/flaresolverr:latest
