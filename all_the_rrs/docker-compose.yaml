@@ -13,13 +13,16 @@ services:
     restart: unless-stopped
     networks:
       - all_the_rrs
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
     container_name: sonarr
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=0
+      - PGID=0
       - TZ=Africa/Johannesburg
     volumes:
       - D:/homelab/sonarr/config:/config
@@ -27,21 +30,23 @@ services:
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
-      - F:/1-Utorrent2023/2-CompletedDownloads:/mnt/F/1-Utorrent2023/2-CompletedDownloads:rw
-      - D:/homelab-data-1/deluge/downloads:/downloads
-      - D:/homelab-data-1/qbittorrent/downloads:/downloads
+      - D:/homelab-data-1/utorrent/completed:/utorrent/completed:rshared
     ports:
       - 5555:8989
     restart: unless-stopped
     networks:
       - all_the_rrs
+    privileged: true 
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
     environment:
-      - PUID=1000
-      - PGID=1000
+      - PUID=0
+      - PGID=0
       - TZ=Africa/Johannesburg
     volumes:
       - D:/homelab/radarr/config:/config
@@ -49,14 +54,16 @@ services:
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
-      - F:/1-Utorrent2023/2-CompletedDownloads:/mnt/F/1-Utorrent2023/2-CompletedDownloads:rw
-      - D:/homelab-data-1/deluge/downloads:/downloads
-      - D:/homelab-data-1/qbittorrent/downloads:/downloads
+      - D:/homelab-data-1/utorrent/completed:/utorrent/completed:rshared
     ports:
       - 4444:7878
     restart: unless-stopped   
     networks:
       - all_the_rrs
+    privileged: true 
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -72,6 +79,9 @@ services:
     restart: unless-stopped
     networks:
       - all_the_rrs
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
 
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
@@ -87,62 +97,67 @@ services:
       - E:/homelab-data-2/plex/series:/homelab-data-2/series
       - F:/homelab-data-3/plex/series:/homelab-data-3/series
       - G:/homelab-data-4/plex/series:/homelab-data-4/series
-      - D:/homelab-data-1/plex/movies:/movies
-      - E:/homelab-data-2/plex/movies:/movies
-      - F:/homelab-data-3/plex/movies:/movies
-      - G:/homelab-data-4/plex/movies:/movies
+      - D:/homelab-data-1/plex/movies:/homelab-data-1/movies
+      - E:/homelab-data-2/plex/movies:/homelab-data-2/movies
+      - F:/homelab-data-3/plex/movies:/homelab-data-3/movies
+      - G:/homelab-data-4/plex/movies:/homelab-data-4/movies
     ports:
       - 6767:6767
     restart: unless-stopped
     networks:
       - all_the_rrs
-
-  qbittorrent:
-    restart: unless-stopped
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Johannesburg
-      - WEBUI_PORT=8080
-      - TORRENTING_PORT=6881
-    volumes:
-      - D:/homelab/qbittorrent/config:/config
-      - D:/homelab-data-1/qbittorrent/downloads:/downloads
-    ports:
-      - 8080:8080
-      - 6881:6881
-      - 6881:6881/udp
     dns:
       - 1.1.1.1
       - 8.8.8.8
-    networks:
-      - high_perf_net
+
+  # qbittorrent:
+  #   restart: unless-stopped
+  #   image: lscr.io/linuxserver/qbittorrent:latest
+  #   container_name: qbittorrent
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Africa/Johannesburg
+  #     - WEBUI_PORT=8080
+  #     - TORRENTING_PORT=6881
+  #   volumes:
+  #     - D:/homelab/qbittorrent/config:/config
+  #     - D:/homelab-data-1/qbittorrent/downloads:/downloads
+  #   ports:
+  #     - 8080:8080
+  #     - 6881:6881
+  #     - 6881:6881/udp
+  #   dns:
+  #     - 1.1.1.1
+  #     - 8.8.8.8
+  #   cap_add:
+  #     - NET_ADMIN
+  #   networks:
+  #     - all_the_rrs
       
-  deluge:
-    image: lscr.io/linuxserver/deluge:latest
-    container_name: deluge
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Johannesburg
-      - DELUGE_LOGLEVEL=error #optional
-    volumes:
-      - D:/homelab/deluge/config:/config
-      - D:/homelab-data-1/deluge/downloads:/downloads
-      - D:/homelab-data-1/plex:/homelab-data-1
-      - E:/homelab-data-2/plex:/homelab-data-2
-      - F:/homelab-data-3/plex:/homelab-data-3
-      - G:/homelab-data-4/plex:/homelab-data-4
-    ports:
-      - 8112:8112
-      - 6882:6881
-      - 6882:6881/udp
-      - 58846:58846 #optional
-    restart: unless-stopped
-    networks:
-      - all_the_rrs
+  # deluge:
+  #   image: lscr.io/linuxserver/deluge:latest
+  #   container_name: deluge
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Africa/Johannesburg
+  #     - DELUGE_LOGLEVEL=error #optional
+  #   volumes:
+  #     - D:/homelab/deluge/config:/config
+  #     - D:/homelab-data-1/deluge/downloads:/downloads
+  #     - D:/homelab-data-1/plex:/homelab-data-1
+  #     - E:/homelab-data-2/plex:/homelab-data-2
+  #     - F:/homelab-data-3/plex:/homelab-data-3
+  #     - G:/homelab-data-4/plex:/homelab-data-4
+  #   ports:
+  #     - 8112:8112
+  #     - 6882:6881
+  #     - 6882:6881/udp
+  #     - 58846:58846 #optional
+  #   restart: unless-stopped
+  #   networks:
+  #     - all_the_rrs
 
   handbrake:
     restart: unless-stopped
@@ -176,23 +191,18 @@ services:
     restart: unless-stopped
     networks:
       - all_the_rrs
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
 
 networks:
   all_the_rrs:
     driver: bridge
-    external: true
     driver_opts:
-      com.docker.network.driver.mtu: 1500
+      com.docker.network.driver.mtu: 1500  # Use jumbo frames if supported
+      com.docker.network.bridge.enable_icc: "true"  # Enable inter-container communication
+      com.docker.network.bridge.enable_ip_masquerade: "true"  # Enable IP masquerading
+      com.docker.network.bridge.host_binding_ipv4: "0.0.0.0"  # Bind all container ports to the host
+      com.docker.network.bridge.enable_promiscuous_mode: "true"  # Enable promiscuous mode
 
-  high_perf_net:
-    driver: bridge
-    driver_opts:
-      com.docker.network.driver.mtu: 1500
-      com.docker.network.bridge.name: br0
-      com.docker.network.bridge.enable_icc: "true"
-      com.docker.network.bridge.enable_ip_masquerade: "true"
-    ipam:
-      driver: default
-      config:
-        - subnet: 192.168.100.0/24
-          gateway: 192.168.100.1
+# docker network create --driver bridge --subnet 192.168.1.0/24 --gateway 192.168.1.1 all_the_rrs
