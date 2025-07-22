@@ -1,28 +1,38 @@
 services:
-  dashy:
-    image: lissy93/dashy
-    container_name: dashy
-    ports:
-      - "5050:8080"
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
+  # dashy:
+  #   image: lissy93/dashy
+  #   container_name: dashy
+  #   ports:
+  #     - "5050:8080"
+  #   environment:
+  #     - NODE_ENV=production
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./dashy-config.yml:/app/user-data/conf.yml
+  #   healthcheck:
+  #     test: ['CMD', 'node', '/app/services/healthcheck']
+  #     interval: 1m30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 40s
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.dashy.rule=Host(`dash.neroserver.xyz`)"
+  #     - "traefik.http.routers.dashy.entrypoints=websecure"
+  #     - "traefik.http.routers.dashy.tls.certresolver=myresolver"
+  #     - "traefik.http.services.dashy.loadbalancer.server.port=5050"
+  #   networks:
+  #     - web
+
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: 'louislam/uptime-kuma:latest'
     volumes:
-      - ./dashy-config.yml:/app/user-data/conf.yml
-    healthcheck:
-      test: ['CMD', 'node', '/app/services/healthcheck']
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashy.rule=Host(`dash.neroserver.xyz`)"
-      - "traefik.http.routers.dashy.entrypoints=websecure"
-      - "traefik.http.routers.dashy.tls.certresolver=myresolver"
-      - "traefik.http.services.dashy.loadbalancer.server.port=8080"
-    networks:
-      - web
+      - 'D:/homelab/uptime-kuma:/app/data'
+    ports:
+      - '3001:3001'
+    restart: unless-stopped
+
   
   cloudflare-ddns:
     container_name: cloudflare-ddns
@@ -34,8 +44,7 @@ services:
       - PROXIED=true
     labels:
       - "traefik.enable=false"
-    networks:
-      - web
+    network_mode: host
 
   cloudflared:
     container_name: cloudflared
@@ -44,63 +53,68 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=false"
-    networks:
-      - web
+    network_mode: host
   
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    ports:
-      - "80:80"
-      - "443:443"
-      - "81:8080"  # Dashboard 
-    environment:
-      - CF_DNS_API_TOKEN=n65O1JruyvJ84dE0Uhrs2rZmP5hrSUII66i8tYVQ
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--api.dashboard=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
-      - "--certificatesresolvers.myresolver.acme.email=dario@neroland.co.za"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "D:/homelab/letsencrypt_traefik:/letsencrypt"
-    networks:
-      - web
+  # traefik:
+  #   image: traefik:latest
+  #   container_name: traefik
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #     - "81:8080"  # Dashboard 
+  #   environment:
+  #     - CF_DNS_API_TOKEN=n65O1JruyvJ84dE0Uhrs2rZmP5hrSUII66i8tYVQ
+  #   command:
+  #     - "--api.insecure=true"
+  #     - "--providers.docker=true"
+  #     - "--api.dashboard=true"
+  #     - "--entrypoints.web.address=:80"
+  #     - "--entrypoints.websecure.address=:443"
+  #     - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+  #     - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
+  #     - "--certificatesresolvers.myresolver.acme.email=dario@neroland.co.za"
+  #     - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+  #     - --experimental.plugins.traefik-real-ip.modulename=github.com/soulbalz/traefik-real-ip
+  #     - --experimental.plugins.traefik-real-ip.version=v1.0.3
+  #   volumes:
+  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  #     - "D:/homelab/letsencrypt_traefik:/letsencrypt"
+  #     # - "./traefik.yml:/traefik.yml:ro"
+  #     # - "./fileConfig.yml/:/fileConfig.yml:rw"
+  #     # - "D:/homelab/traefik/access.log:/var/log/traefik/access.log"
+  #   networks:
+  #     - web
+  #   dns:
+  #     - 1.1.1.1
+  #     - 8.8.8.8
 
-  whoami:
-    image: "traefik/whoami"
-    container_name: "traefik-whoami"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`neroserver.xyz`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
-    networks:
-      - web
+  # whoami:
+  #   image: "traefik/whoami"
+  #   container_name: "traefik-whoami"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.whoami.rule=Host(`neroserver.xyz`)"
+  #     - "traefik.http.routers.whoami.entrypoints=web"
+  #   networks:
+  #     - web
 
-  pihole:
-    container_name: pihole
-    image: pihole/pihole:latest
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
-      - "3141:80/tcp"
-    environment:
-      TZ: 'Africa/Johannesburg'
-      WEBPASSWORD: 'WhatIsLife?1234'
-    volumes:
-      - D:/homelab/pihole:/etc/pihole
-      - D:/homelab/pihole/dnsmasq.d:/etc/dnsmasq.d'
-    cap_add:
-      - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
-    restart: unless-stopped
-    networks:
-      - web
+  # pihole:
+  #   container_name: pihole
+  #   image: pihole/pihole:latest
+  #   ports:
+  #     - "53:53/tcp"
+  #     - "53:53/udp"
+  #     - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
+  #     - "3141:80/tcp"
+  #   environment:
+  #     TZ: 'Africa/Johannesburg'
+  #     WEBPASSWORD: 'WhatIsLife?1234'
+  #   volumes:
+  #     - D:/homelab/pihole:/etc/pihole
+  #     - D:/homelab/pihole/dnsmasq.d:/etc/dnsmasq.d'
+  #   cap_add:
+  #     - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+  #   restart: unless-stopped
 
   portainer:
     container_name: portainer
@@ -112,8 +126,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - "D:/homelab/portainer:/data"
-    networks:
-      - web
+
 
   portainer_agent:
     container_name: portainer_agent
@@ -124,17 +137,19 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - "D:/homelab/portainer:/data"
-    networks:
-      - web
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - 9090:9090
-  grafana:
-    image: grafana/grafana
-    ports:
-      - 3000:3000
+
+  # prometheus:
+  #   container_name: prometheus
+  #   image: prom/prometheus
+  #   ports:
+  #     - 9090:9090
+
+  # grafana:
+  #   container_name: grafana
+  #   image: grafana/grafana
+  #   ports:
+  #     - 3000:3000
 
   watchtower:
     container_name: watchtower
@@ -143,6 +158,15 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # it-tools:
+  #   container_name: it-tools
+  #   restart: unless-stopped
+  #   ports:
+  #       - 8080:80
+  #   image: corentinth/it-tools:latest
+
 networks:
   web:
     driver: bridge
+  backend:
+    external: true

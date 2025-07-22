@@ -1,21 +1,21 @@
 services:
-  overseerr:
-    image: sctx/overseerr:latest
-    container_name: overseerr
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=Africa/Johannesburg
-      - PORT=5055
-    ports:
-      - 5055:5055
-    volumes:
-      - d:/homelab-data-1/overseerr/app/config:/app/config
-    restart: unless-stopped
-    networks:
-      - all_the_rrs
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
+  # overseerr:
+  #   image: sctx/overseerr:latest
+  #   container_name: overseerr
+  #   environment:
+  #     - LOG_LEVEL=debug
+  #     - TZ=Africa/Johannesburg
+  #     - PORT=5055
+  #   ports:
+  #     - 5055:5055
+  #   volumes:
+  #     - d:/homelab-data-1/overseerr/app/config:/app/config
+  #   restart: unless-stopped
+  #   networks:
+  #     - all_the_rrs
+  #   dns:
+  #     - 1.1.1.1
+  #     - 8.8.8.8
 
   sonarr:
     image: lscr.io/linuxserver/sonarr:latest
@@ -30,7 +30,13 @@ services:
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
-      - D:/homelab-data-1/utorrent/completed:/utorrent/completed:rshared
+      - D:/homelab-data-1/utorrent/completed:/utorrent/completed
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.neroserver.xyz`)"
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+      - "traefik.http.routers.sonarr.tls.certresolver=myresolver"
+      - "traefik.http.services.sonarr.loadbalancer.server.port=5555"
     ports:
       - 5555:8989
     restart: unless-stopped
@@ -41,29 +47,122 @@ services:
       - 1.1.1.1
       - 8.8.8.8
 
-  radarr:
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
+  # radarr:
+  #   image: lscr.io/linuxserver/radarr:latest
+  #   container_name: radarr
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=Africa/Johannesburg
+  #   volumes:
+  #     - D:/homelab/radarr/config:/config
+  #     - D:/homelab-data-1/plex:/homelab-data-1
+  #     - E:/homelab-data-2/plex:/homelab-data-2
+  #     - F:/homelab-data-3/plex:/homelab-data-3
+  #     - G:/homelab-data-4/plex:/homelab-data-4
+  #     - D:/homelab-data-1/utorrent/completed:/utorrent/completed
+  #     - D:/homelab-data-1/nzbget/downloads:/nzbget/completed
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.radarr.rule=Host(`radarr.neroserver.xyz`)"
+  #     - "traefik.http.routers.radarr.entrypoints=websecure"
+  #     - "traefik.http.routers.radarr.tls.certresolver=myresolver"
+  #     - "traefik.http.services.radarr.loadbalancer.server.port=4444"
+  #   ports:
+  #     - 4444:7878
+  #   restart: unless-stopped   
+  #   networks:
+  #     - all_the_rrs
+  #   privileged: true 
+  #   dns:
+  #     - 1.1.1.1
+  #     - 8.8.8.8
+
+  # nzbget:
+  #   image: lscr.io/linuxserver/nzbget:latest
+  #   container_name: nzbget
+  #   environment:
+  #     - PUID=0
+  #     - PGID=0
+  #     - TZ=Africa/Johannesburg
+  #     - NZBGET_USER=nzbget #optional
+  #     - NZBGET_PASS=tegbzn6789 #optional
+  #   volumes:
+  #     - D:/homelab/nzbget/config:/config
+  #     - D:/homelab-data-1/nzbget/downloads:/downloads
+  #   ports:
+  #     - 6789:6789   
+  #   networks:
+  #     - all_the_rrs
+  #   restart: unless-stopped
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
     environment:
       - PUID=0
       - PGID=0
       - TZ=Africa/Johannesburg
     volumes:
-      - D:/homelab/radarr/config:/config
+      - D:/homelab/lidarr/config:/config
       - D:/homelab-data-1/plex:/homelab-data-1
       - E:/homelab-data-2/plex:/homelab-data-2
       - F:/homelab-data-3/plex:/homelab-data-3
       - G:/homelab-data-4/plex:/homelab-data-4
-      - D:/homelab-data-1/utorrent/completed:/utorrent/completed:rshared
+      - D:/homelab-data-1/utorrent/completed:/utorrent/completed
     ports:
-      - 4444:7878
-    restart: unless-stopped   
+      - 8888:1515
+    restart: unless-stopped  
     networks:
       - all_the_rrs
     privileged: true 
     dns:
       - 1.1.1.1
       - 8.8.8.8
+      
+  # tdarr:
+  #   container_name: tdarr
+  #   image: ghcr.io/haveagitgat/tdarr:latest
+  #   restart: unless-stopped
+  #   networks:
+  #     - all_the_rrs
+  #   ports:
+  #     - 8265:8265 # webUI port
+  #     - 8266:8266 # server port
+  #   environment:
+  #     - TZ=Africa/Johannesburg
+  #     - PUID=0
+  #     - PGID=0
+  #     - UMASK_SET=002
+  #     - serverIP=0.0.0.0
+  #     - serverPort=8266
+  #     - webUIPort=8265
+  #     - internalNode=true
+  #     - inContainer=true
+  #     - ffmpegVersion=6
+  #     - nodeName=MyInternalNode
+  #     - NVIDIA_DRIVER_CAPABILITIES=all
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #   volumes:
+  #     - D:/homelab/tdarr/server:/app/server
+  #     - D:/homelab/tdarr/configs:/app/configs
+  #     - D:/homelab/tdarr/logs:/app/logs
+  #     - D:/homelab-data-1/tdarr/transcode_cache:/temp
+  #     - D:/homelab-data-1/plex:/homelab-data-1
+  #     - E:/homelab-data-2/plex:/homelab-data-2
+  #     - F:/homelab-data-3/plex:/homelab-data-3
+  #     - G:/homelab-data-4/plex:/homelab-data-4
+  #     - D:/homelab-data-1/utorrent/completed:/utorrent/completed:rshared
+  #   privileged: true 
+  #   devices:
+  #     - /dev/dri:/dev/dri
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #         - driver: nvidia
+  #           count: all
+  #           capabilities: [gpu]
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -75,7 +174,7 @@ services:
     volumes:
       - D:/homelab/prowlarr/config:/config
     ports:
-      - 9696:9696
+      - 9999:9696
     restart: unless-stopped
     networks:
       - all_the_rrs
@@ -83,32 +182,32 @@ services:
       - 1.1.1.1
       - 8.8.8.8
 
-  bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
-    container_name: bazarr
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Africa/Johannesburg
-    volumes:
-      - D:/homelab/bazarr/config:/config
-      - D:/homelab/bazarr/app:/app/bazarr/bin
-      - D:/homelab-data-1/plex/series:/homelab-data-1/series
-      - E:/homelab-data-2/plex/series:/homelab-data-2/series
-      - F:/homelab-data-3/plex/series:/homelab-data-3/series
-      - G:/homelab-data-4/plex/series:/homelab-data-4/series
-      - D:/homelab-data-1/plex/movies:/homelab-data-1/movies
-      - E:/homelab-data-2/plex/movies:/homelab-data-2/movies
-      - F:/homelab-data-3/plex/movies:/homelab-data-3/movies
-      - G:/homelab-data-4/plex/movies:/homelab-data-4/movies
-    ports:
-      - 6767:6767
-    restart: unless-stopped
-    networks:
-      - all_the_rrs
-    dns:
-      - 1.1.1.1
-      - 8.8.8.8
+  # bazarr:
+  #   image: lscr.io/linuxserver/bazarr:latest
+  #   container_name: bazarr
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=Africa/Johannesburg
+  #   volumes:
+  #     - D:/homelab/bazarr/config:/config
+  #     - D:/homelab/bazarr/app:/app/bazarr/bin
+  #     - D:/homelab-data-1/plex/series:/homelab-data-1/series
+  #     - E:/homelab-data-2/plex/series:/homelab-data-2/series
+  #     - F:/homelab-data-3/plex/series:/homelab-data-3/series
+  #     - G:/homelab-data-4/plex/series:/homelab-data-4/series
+  #     - D:/homelab-data-1/plex/movies:/homelab-data-1/movies
+  #     - E:/homelab-data-2/plex/movies:/homelab-data-2/movies
+  #     - F:/homelab-data-3/plex/movies:/homelab-data-3/movies
+  #     - G:/homelab-data-4/plex/movies:/homelab-data-4/movies
+  #   ports:
+  #     - 6767:6767
+  #   restart: unless-stopped
+  #   networks:
+  #     - all_the_rrs
+  #   dns:
+  #     - 1.1.1.1
+  #     - 8.8.8.8
 
   # qbittorrent:
   #   restart: unless-stopped
@@ -159,23 +258,30 @@ services:
   #   networks:
   #     - all_the_rrs
 
-  handbrake:
-    restart: unless-stopped
-    container_name: handbrake
-    image: jlesage/handbrake:latest
-    ports:
-      - "5800:5800"
-    volumes:
-      - D:/homelab/handbrake:/config:rw
-      - D:/homelab-data-1/handbrake/storage:/storage:ro
-      # - D:/homelab-data-1/deluge/downloads:/watch:rw
-      # - D:/homelab-data-1/deluge/downloads:/output:rw
-      - D:/homelab-data-1/plex:/watch:rw
-      - E:/homelab-data-2/plex:/watch:rw
-      - F:/homelab-data-3/plex:/watch:rw
-      - G:/homelab-data-4/plex:/watch:rw
-    networks:
-      - all_the_rrs
+  # handbrake:
+  #   restart: unless-stopped
+  #   container_name: handbrake
+  #   image: jlesage/handbrake:latest
+  #   ports:
+  #     - "5800:5800"
+  #   runtime: nvidia
+  #   environment:
+  #     - NVIDIA_VISIBLE_DEVICES=all
+  #     - NVIDIA_DRIVER_CAPABILITIES=compute,video,utility
+  #   volumes:
+  #     - D:/homelab/handbrake:/config:rw
+  #     - D:/homelab-data-1/handbrake/storage:/storage
+  #     - D:/homelab-data-1/plex:/watch:rw
+  #     - E:/homelab-data-2/plex:/watch:rw
+  #     - F:/homelab-data-3/plex:/watch:rw
+  #     - G:/homelab-data-4/plex:/watch:rw
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - capabilities: [gpu]
+  #   networks:
+  #     - all_the_rrs
 
   flaresolverr:
     # DockerHub mirror flaresolverr/flaresolverr:latest
