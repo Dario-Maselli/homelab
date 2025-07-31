@@ -1,7 +1,0 @@
-http:
-    middlewares:
-        my-traefik-real-ip:
-            plugin:
-                traefik-real-ip:
-                    excludednets:
-                        - 1.1.1.1/24

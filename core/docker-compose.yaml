@@ -1,28 +1,4 @@
 services:
-  # dashy:
-  #   image: lissy93/dashy
-  #   container_name: dashy
-  #   ports:
-  #     - "5050:8080"
-  #   environment:
-  #     - NODE_ENV=production
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ./dashy-config.yml:/app/user-data/conf.yml
-  #   healthcheck:
-  #     test: ['CMD', 'node', '/app/services/healthcheck']
-  #     interval: 1m30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 40s
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.dashy.rule=Host(`dash.neroserver.xyz`)"
-  #     - "traefik.http.routers.dashy.entrypoints=websecure"
-  #     - "traefik.http.routers.dashy.tls.certresolver=myresolver"
-  #     - "traefik.http.services.dashy.loadbalancer.server.port=5050"
-  #   networks:
-  #     - web
 
   uptime-kuma:
     container_name: uptime-kuma
@@ -51,70 +27,25 @@ services:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate run --token eyJhIjoiNzg4NDFkNDkyYzdiNGY3M2NlNmFlY2MwNjZhZTAwMjkiLCJ0IjoiYTIxZTllY2EtYThhNy00MGJmLWFlNjMtZDRjMDJlYjc4ZTMzIiwicyI6IlpHWm1Oamt5WW1VdE1UYzJZUzAwTXpkaExXRXpZV1V0T0RnMFltRmxNbUl6TVdaaCJ9
     restart: unless-stopped
-    labels:
-      - "traefik.enable=false"
     network_mode: host
-  
-  # traefik:
-  #   image: traefik:latest
-  #   container_name: traefik
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #     - "81:8080"  # Dashboard 
-  #   environment:
-  #     - CF_DNS_API_TOKEN=n65O1JruyvJ84dE0Uhrs2rZmP5hrSUII66i8tYVQ
-  #   command:
-  #     - "--api.insecure=true"
-  #     - "--providers.docker=true"
-  #     - "--api.dashboard=true"
-  #     - "--entrypoints.web.address=:80"
-  #     - "--entrypoints.websecure.address=:443"
-  #     - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
-  #     - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
-  #     - "--certificatesresolvers.myresolver.acme.email=dario@neroland.co.za"
-  #     - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-  #     - --experimental.plugins.traefik-real-ip.modulename=github.com/soulbalz/traefik-real-ip
-  #     - --experimental.plugins.traefik-real-ip.version=v1.0.3
-  #   volumes:
-  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
-  #     - "D:/homelab/letsencrypt_traefik:/letsencrypt"
-  #     # - "./traefik.yml:/traefik.yml:ro"
-  #     # - "./fileConfig.yml/:/fileConfig.yml:rw"
-  #     # - "D:/homelab/traefik/access.log:/var/log/traefik/access.log"
-  #   networks:
-  #     - web
-  #   dns:
-  #     - 1.1.1.1
-  #     - 8.8.8.8
 
-  # whoami:
-  #   image: "traefik/whoami"
-  #   container_name: "traefik-whoami"
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.whoami.rule=Host(`neroserver.xyz`)"
-  #     - "traefik.http.routers.whoami.entrypoints=web"
-  #   networks:
-  #     - web
-
-  # pihole:
-  #   container_name: pihole
-  #   image: pihole/pihole:latest
-  #   ports:
-  #     - "53:53/tcp"
-  #     - "53:53/udp"
-  #     - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
-  #     - "3141:80/tcp"
-  #   environment:
-  #     TZ: 'Africa/Johannesburg'
-  #     WEBPASSWORD: 'WhatIsLife?1234'
-  #   volumes:
-  #     - D:/homelab/pihole:/etc/pihole
-  #     - D:/homelab/pihole/dnsmasq.d:/etc/dnsmasq.d'
-  #   cap_add:
-  #     - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
-  #   restart: unless-stopped
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp" # Only required if you are using Pi-hole as your DHCP server
+      - "3141:80/tcp"
+    environment:
+      TZ: 'Africa/Johannesburg'
+      WEBPASSWORD: 'WhatIsLife?1234'
+    volumes:
+      - D:/homelab/pihole:/etc/pihole
+      - D:/homelab/pihole/dnsmasq.d:/etc/dnsmasq.d'
+    cap_add:
+      - NET_ADMIN # Required if you are using Pi-hole as your DHCP server, else not needed
+    restart: unless-stopped
 
   portainer:
     container_name: portainer
