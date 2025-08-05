@@ -1,0 +1,20 @@
+pageInfo:
+  title: Home Lab
+
+appConfig:
+  title: 'Neroserver'
+  description: 'Real-time status and controls for Plex, Sonarr, Radarr, uTorrent, System Stats'
+  theme: dashy-docs
+  layout: auto
+  icon: 'mdi-server'
+  auth:
+    users:
+      - user: neroland
+        hash: 99f8657e41a7b3a3b1a057df3ba6e4fe32464e572f323b079c3b5ad3497f237d
+        type: admin
+  enableGuestAccess: false
+
+sections:
+  - name: Media Apps
+    icon: mdi-movie-open
+    widgets:

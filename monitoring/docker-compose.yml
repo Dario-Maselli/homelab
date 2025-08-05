@@ -1,0 +1,56 @@
+services:
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - GF_SECURITY_ADMIN_EMAIL=${ADMIN_EMAIL}
+      - GF_INSTALL_PLUGINS=fr-ser-sqlite-datasource,grafana-polystat-panel,grafana-piechart-panel,yesoreyeram-boomtable-panel,jdbranham-diagram-panel,flant-statusmap-panel,grafana-worldmap-panel
+    volumes:
+      - D:/homelab/grafana/:/var/lib/grafana
+    networks:
+      - shared-db-net
+
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: 'louislam/uptime-kuma:latest'
+    volumes:
+      - 'D:/homelab/uptime-kuma:/app/data'
+    ports:
+      - '3001:3001'
+    restart: unless-stopped
+
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    environment:
+      - USER_CREATION=true
+    ports:
+      - 8090:8090
+    volumes:
+      - D:/homelab/beszel/data:/beszel_data
+      - D:/homelab/beszel/socket:/beszel_socket
+
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - D:/homelab/beszel/agent_data:/var/lib/beszel-agent
+      - D:/homelab/beszel/socket:/beszel_socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: 45876
+      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEi3ndplz/unf8MiKEHChFeEW751Nq2PEcxLRu03Pnwb'
+      TOKEN: a85d8dec-c385-4e9f-82d9-d995f7d64ee6
+      HUB_URL: https://monitor.neroserver.xyz
+  
+networks:
+  shared-db-net:
+    external: true
