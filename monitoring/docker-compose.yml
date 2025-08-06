@@ -56,7 +56,15 @@ services:
     build: ./discord-plex-bot
     container_name: plex-discord-bot
     env_file:
-      - ./discord-plex-bot/.env
+      - .env
+    restart: unless-stopped
+
+  cs-rank-bot:
+    build: ./cs-rank-bot
+    container_name: cs-rank-bot
+    network_mode: host
+    env_file:
+      - .env
     restart: unless-stopped
   
 networks:
