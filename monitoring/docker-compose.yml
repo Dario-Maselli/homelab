@@ -51,6 +51,13 @@ services:
       KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEi3ndplz/unf8MiKEHChFeEW751Nq2PEcxLRu03Pnwb'
       TOKEN: a85d8dec-c385-4e9f-82d9-d995f7d64ee6
       HUB_URL: https://monitor.neroserver.xyz
+
+  discord-plex-bot:
+    build: ./discord-plex-bot
+    container_name: plex-discord-bot
+    env_file:
+      - ./discord-plex-bot/.env
+    restart: unless-stopped
   
 networks:
   shared-db-net:
