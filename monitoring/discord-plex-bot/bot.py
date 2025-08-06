@@ -12,7 +12,10 @@ DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 PLEX_URL = os.getenv("PLEX_URL")
 PLEX_TOKEN = os.getenv("PLEX_TOKEN")
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.default())
+intents = discord.Intents.default()
+intents.message_content = True
+intents.presences = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
 def plex_connect():
     try:
@@ -20,14 +23,36 @@ def plex_connect():
     except Exception:
         return None
 
+async def update_status_task():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        plex = plex_connect()
+        if plex is None:
+            print("Plex server offline. Exiting bot.")
+            await bot.close()
+            sys.exit(1)
+        try:
+            sessions = plex.sessions()
+            # Count unique users
+            user_names = set()
+            for session in sessions:
+                try:
+                    user_names.add(session.usernames[0])
+                except Exception:
+                    pass
+            user_count = len(user_names)
+            # Update bot status
+            activity = discord.CustomActivity(
+                name=f"{user_count} user{'s' if user_count != 1 else ''} on Plex"
+            )
+            await bot.change_presence(activity=activity)
+        except Exception as e:
+            print(f"Error updating status: {e}")
+        await asyncio.sleep(5)
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
-    plex = plex_connect()
-    if plex is None:
-        print("Plex server offline. Exiting bot.")
-        await bot.close()
-        sys.exit(1)
 
 @bot.command()
 async def plexstatus(ctx):
@@ -37,7 +62,13 @@ async def plexstatus(ctx):
         await bot.close()
         sys.exit(1)
     sessions = plex.sessions()
-    user_count = len(set(s.usernames for s in sessions))
+    user_names = set()
+    for session in sessions:
+        try:
+            user_names.add(session.usernames[0])
+        except Exception:
+            pass
+    user_count = len(user_names)
     now_playing = len(sessions)
     await ctx.send(f"✅ Plex is **online**.\n🎬 Currently **{now_playing}** stream(s) playing by **{user_count}** user(s).")
 
@@ -69,6 +100,7 @@ async def health_check():
 @bot.event
 async def on_connect():
     bot.loop.create_task(health_check())
+    bot.loop.create_task(update_status_task())
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)
