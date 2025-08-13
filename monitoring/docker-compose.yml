@@ -48,9 +48,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       LISTEN: 45876
-      KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEi3ndplz/unf8MiKEHChFeEW751Nq2PEcxLRu03Pnwb'
-      TOKEN: a85d8dec-c385-4e9f-82d9-d995f7d64ee6
-      HUB_URL: https://monitor.neroserver.xyz
+      KEY: ${BESZEL_AGENT_KEY}
+      TOKEN: ${BESZEL_AGENT_TOKEN}
+      HUB_URL: ${BESZEL_AGENT_URL}
 
   discord-plex-bot:
     build: ./discord-plex-bot
