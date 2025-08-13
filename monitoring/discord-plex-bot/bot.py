@@ -1,5 +1,4 @@
 import os
-import sys
 import asyncio
 from discord.ext import commands
 from plexapi.server import PlexServer
@@ -17,6 +16,9 @@ intents.message_content = True
 intents.presences = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+PLEX_MAX_FAILURES = 3
+plex_failure_count = 0
+
 def plex_connect():
     try:
         return PlexServer(PLEX_URL, PLEX_TOKEN)
@@ -24,16 +26,24 @@ def plex_connect():
         return None
 
 async def update_status_task():
+    global plex_failure_count
     await bot.wait_until_ready()
     while not bot.is_closed():
         plex = plex_connect()
         if plex is None:
-            print("Plex server offline. Exiting bot.")
-            await bot.close()
-            sys.exit(1)
+            plex_failure_count += 1
+            print(f"Plex check failed ({plex_failure_count}/{PLEX_MAX_FAILURES})")
+            if plex_failure_count >= PLEX_MAX_FAILURES:
+                activity = discord.CustomActivity(
+                    name="❌ Plex is OFFLINE"
+                )
+                await bot.change_presence(activity=activity)
+            # Wait longer on failure
+            await asyncio.sleep(15)
+            continue
         try:
+            plex_failure_count = 0  # Reset failures on success
             sessions = plex.sessions()
-            # Count unique users
             user_names = set()
             for session in sessions:
                 try:
@@ -41,7 +51,6 @@ async def update_status_task():
                 except Exception:
                     pass
             user_count = len(user_names)
-            # Update bot status
             activity = discord.CustomActivity(
                 name=f"{user_count} user{'s' if user_count != 1 else ''} on Plex"
             )
@@ -59,8 +68,7 @@ async def plexstatus(ctx):
     plex = plex_connect()
     if plex is None:
         await ctx.send("❌ Plex server is **offline**.")
-        await bot.close()
-        sys.exit(1)
+        return
     sessions = plex.sessions()
     user_names = set()
     for session in sessions:
@@ -77,8 +85,7 @@ async def viewers(ctx):
     plex = plex_connect()
     if plex is None:
         await ctx.send("❌ Plex server is offline.")
-        await bot.close()
-        sys.exit(1)
+        return
     sessions = plex.sessions()
     users = set()
     for session in sessions:
@@ -89,18 +96,13 @@ async def viewers(ctx):
     await ctx.send(f"👀 Users currently watching: {', '.join(users) if users else 'No one'}")
 
 async def health_check():
-    while True:
-        plex = plex_connect()
-        if plex is None:
-            print("Plex server went offline. Exiting bot.")
-            await bot.close()
-            sys.exit(1)
-        await asyncio.sleep(30)
+    # This function is now optional, you could remove it
+    pass
 
 @bot.event
 async def on_connect():
-    bot.loop.create_task(health_check())
     bot.loop.create_task(update_status_task())
+    # No need for health_check
 
 if __name__ == "__main__":
     bot.run(DISCORD_TOKEN)

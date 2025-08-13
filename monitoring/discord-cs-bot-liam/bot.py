@@ -5,14 +5,16 @@ import requests
 from bs4 import BeautifulSoup
 from discord.ext import commands
 import discord
+import aiohttp
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN_CS")
-STEAM_ID = os.getenv("STEAM_ID")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN_CS_LIAM")
+STEAM_ID = os.getenv("STEAM_ID_LIAM")
 UPDATE_INTERVAL = int(os.getenv("UPDATE_INTERVAL", 300))
+STEAM_API_KEY = os.getenv("STEAM_API_KEY")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -78,24 +80,80 @@ def get_latest_season_rating(steam_id):
     latest = seasons[0]  # S3 is listed before S2, S1, etc.
     return latest["season"], latest["rating"]
 
+async def is_in_cs2_async(steam_id, api_key):
+    url = f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/?key={api_key}&steamids={steam_id}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=5) as resp:
+                data = await resp.json()
+                players = data["response"].get("players", [])
+                if players and "gameid" in players[0]:
+                    return players[0]["gameid"] == "730"
+    except Exception as e:
+        print("Error checking Steam status:", e)
+    return False
+
 async def update_status_task():
     await bot.wait_until_ready()
-    while not bot.is_closed():
-        season, rating = get_latest_season_rating(STEAM_ID)
-        if season and rating:
-            status = f"CS2 {season}: {rating}"
-        else:
-            status = "Premier rating: unavailable"
-        activity = discord.CustomActivity(
-            name=status
-        )
-        try:
-            await bot.change_presence(activity=activity)
-            print(f"Updated bot status: {status}")
-        except Exception as e:
-            print(f"Error updating status: {e}")
+    status_list = []
+    last_update = 0
+    last_steam_check = 0
+    status_index = 0
+    cycle_interval = 15
+    steam_check_interval = 60  # Only check Steam once per minute
+    last_in_cs2 = None
+    current_status = None
 
-        await asyncio.sleep(UPDATE_INTERVAL)
+    while not bot.is_closed():
+        now = asyncio.get_event_loop().time()
+
+        # Only check Steam every steam_check_interval
+        if now - last_steam_check > steam_check_interval or last_in_cs2 is None:
+            last_in_cs2 = await is_in_cs2_async(STEAM_ID, STEAM_API_KEY)
+            last_steam_check = now
+
+        # Refresh status_list every UPDATE_INTERVAL
+        if now - last_update > UPDATE_INTERVAL or not status_list:
+            if last_in_cs2:
+                # Add "Playing CS2 now" to the rotation with other stats
+                seasons = get_premier_ranks_selenium(STEAM_ID)
+                if not seasons:
+                    status_list = ["Playing CS2 now"]
+                else:
+                    latest = seasons[0]
+                    status_list = [
+                        "IllegalSloth is in CS2 now!",  # This will appear in rotation!
+                        f"{latest['season']} Current: {latest['rating']}",
+                        f"{latest['season']} Best: {latest['best']}",
+                        f"{latest['season']} Wins: {latest['wins']}"
+                    ]
+            else:
+                seasons = get_premier_ranks_selenium(STEAM_ID)
+                if not seasons:
+                    status_list = ["Premier rating: unavailable"]
+                else:
+                    latest = seasons[0]
+                    status_list = [
+                        f"{latest['season']} Current: {latest['rating']}",
+                        f"{latest['season']} Best: {latest['best']}",
+                        f"{latest['season']} Wins: {latest['wins']}"
+                    ]
+            last_update = now
+            status_index = 0
+
+        # Only call change_presence if the status has changed
+        status = status_list[status_index % len(status_list)]
+        if status != current_status:
+            activity = discord.CustomActivity(name=status)
+            try:
+                await bot.change_presence(activity=activity)
+                print(f"Updated bot status: {status}")
+            except Exception as e:
+                print(f"Error updating status: {e}")
+            current_status = status
+
+        await asyncio.sleep(cycle_interval)
+        status_index += 1
 
 @bot.event
 async def on_ready():

@@ -54,14 +54,22 @@ services:
 
   discord-plex-bot:
     build: ./discord-plex-bot
-    container_name: plex-discord-bot
+    container_name: discord-plex-bot
     env_file:
       - .env
     restart: unless-stopped
 
-  cs-rank-bot:
-    build: ./cs-rank-bot
-    container_name: cs-rank-bot
+  discord-cs-bot:
+    build: ./discord-cs-bot
+    container_name: discord-cs-bot
+    network_mode: host
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  discord-cs-bot-liam:
+    build: ./discord-cs-bot-liam
+    container_name: discord-cs-bot-liam
     network_mode: host
     env_file:
       - .env
