@@ -1,0 +1,29 @@
+# If you omit projects entirely, the script runs in implicit single-project mode.
+# Below shows explicit multi-project config for clarity.
+
+poll_interval_seconds: 20
+
+notify:
+  discord_webhook: ${DISCORD_WEBHOOK}
+  email:
+    enabled: ${EMAIL_ENABLED}
+    smtp_host: ${EMAIL_SMTP_HOST}
+    smtp_port: ${EMAIL_SMTP_PORT}
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    from: ${EMAIL_FROM}
+    to: ${EMAIL_TO}          # comma separated… expanded at runtime
+    starttls: ${EMAIL_STARTTLS}
+
+projects:
+  - name: homelab
+    repo_url: ${REPO_URL}    # e.g. git@github.com:Dario-Maselli/homelab.git
+    branch: ${BRANCH}        # e.g. main
+    path: ${WORKTREE_PATH}   # optional… default: ~/.homelab_watcher/worktrees/homelab
+    # stacks omitted → auto-discover compose files under repo up to depth DISCOVERY_DEPTH
+    # Or specify explicitly like:
+    # stacks:
+    #   - dir: automation
+    #     compose: docker-compose.yml
+    #   - dir: core
+    #     compose: docker-compose.yaml
