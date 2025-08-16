@@ -2,14 +2,14 @@
 # This file lives in the homelab repo… committed and versioned with the infrastructure code
 # It is used by the watcher to determine which stacks to watch and how to configure them
 stacks:
-  # - dir: all_the_rrs
-  #   compose: docker-compose.yml
+  - dir: all_the_rrs
+    compose: docker-compose.yaml
 
   - dir: automation
-    compose: docker-compose.yml
+    compose: docker-compose.yaml
 
   - dir: authentication
-    compose: docker-compose.yml
+    compose: docker-compose.yaml
     # If authentication (or any other stack) doesn’t need env… omit env entirely or keep optional: true
     env:
       backend: vault
@@ -22,7 +22,7 @@ stacks:
     compose: docker-compose.yaml
 
   - dir: databases
-    compose: docker-compose.yml
+    compose: docker-compose.yaml
     env:
       backend: vault
       secret_path: kv/homelab/databases
@@ -34,7 +34,7 @@ stacks:
     compose: docker-compose.yaml
 
   - dir: monitoring
-    compose: docker-compose.yml
+    compose: docker-compose.yaml
     env:
       backend: vault
       secret_path: kv/homelab/monitoring
