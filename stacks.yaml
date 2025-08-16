@@ -2,8 +2,8 @@
 # This file lives in the homelab repo… committed and versioned with the infrastructure code
 # It is used by the watcher to determine which stacks to watch and how to configure them
 stacks:
-  # - dir: all_the_rrs
-  #   compose: docker-compose.yaml
+  - dir: all_the_rrs
+    compose: docker-compose.yaml
 
   - dir: automation
     compose: docker-compose.yaml
