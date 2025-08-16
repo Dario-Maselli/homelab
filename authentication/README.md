@@ -45,6 +45,7 @@ It also includes a **policy for homelab-watcher** so the watcher can securely fe
 
     ```bash
     docker exec -it vault vault login <Root-Token>
+    ```
 
 ---
 
