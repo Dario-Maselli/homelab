@@ -7,6 +7,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # run-all-compose.ps1
 $folders = @(
+    "authentication",
     "core",
     "storage",
     "all_the_rrs",

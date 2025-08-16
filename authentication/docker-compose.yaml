@@ -1,0 +1,28 @@
+services:
+  vault:
+    image: hashicorp/vault:latest
+    container_name: vault
+    restart: unless-stopped
+    cap_add:
+      - IPC_LOCK
+    command: ["vault", "server", "-config=/vault/config/vault.hcl"]
+    environment:
+      SKIP_CHOWN: "true"
+      # these two are informational for the entrypoint… fine to keep static
+      VAULT_API_ADDR: "http://127.0.0.1:8200"
+      VAULT_ADDR: "http://127.0.0.1:8200"
+      VAULT_CLUSTER_ADDR: "http://127.0.0.1:8201"
+    ports:
+      - "8200:8200" 
+      - "8201:8201"
+    volumes:
+      - "${VAULT_DATA_DIR:-./data}:/vault/file"
+      - "./config:/vault/config"
+      - "./policies:/vault/policies"
+    healthcheck:
+      # container’s own loopback… fixed 8200 because vault.hcl is fixed
+      test: ["CMD", "sh", "-lc", "wget -q --spider http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
