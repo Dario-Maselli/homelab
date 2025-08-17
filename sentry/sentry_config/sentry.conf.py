@@ -71,32 +71,32 @@ SENTRY_SINGLE_ORGANIZATION = Bool(env("SENTRY_SINGLE_ORGANIZATION", True))
 # Generic Redis configuration used as defaults for various things including:
 # Buffers, Quotas, TSDB
 
-redis = env("SENTRY_REDIS_HOST") or (env("REDIS_PORT_6379_TCP_ADDR") and "redis")
-if not redis:
-    raise Exception(
-        "Error: REDIS_PORT_6379_TCP_ADDR (or SENTRY_REDIS_HOST) is undefined, did you forget to `--link` a redis container?"
-    )
+REDIS_HOST = os.getenv("SENTRY_REDIS_HOST", "redis")
+REDIS_PORT = int(os.getenv("SENTRY_REDIS_PORT", "6379"))
+REDIS_DB   = int(os.getenv("SENTRY_REDIS_DB", "0"))
+REDIS_PWD  = os.getenv("SENTRY_REDIS_PASSWORD", "")
 
-redis_password = env("SENTRY_REDIS_PASSWORD") or ""
-redis_port = env("SENTRY_REDIS_PORT") or "6379"
-redis_db = env("SENTRY_REDIS_DB") or "0"
-
-SENTRY_OPTIONS.update(
-    {
-        "redis.clusters": {
-            "default": {
-                "hosts": {
-                    0: {
-                        "host": redis,
-                        "password": redis_password,
-                        "port": redis_port,
-                        "db": redis_db,
-                    }
-                }
+# Make Sentry’s internal Redis clients point at the redis service
+SENTRY_OPTIONS["redis.clusters"] = {
+    "default": {
+        "hosts": {
+            0: {
+                "host": REDIS_HOST,
+                "port": REDIS_PORT,
+                "db": REDIS_DB,
+                "password": REDIS_PWD or None,
             }
         }
     }
-)
+}
+
+
+
+# Keep these on Redis too
+SENTRY_RATELIMITER = "sentry.ratelimits.redis.RedisRateLimiter"
+SENTRY_BUFFER = "sentry.buffer.redis.RedisBuffer"
+SENTRY_TSDB = "sentry.tsdb.redissnuba.RedisSnubaTSDB"
+SENTRY_DIGESTS = "sentry.digests.backends.redis.RedisBackend"
 
 #########
 # Cache #
@@ -142,7 +142,13 @@ if rabbitmq:
         + (env("SENTRY_RABBITMQ_VHOST") or env("RABBITMQ_ENV_RABBITMQ_DEFAULT_VHOST") or "/")
     )
 else:
-    BROKER_URL = f"redis://{redis_password}@{redis}:{redis_port}/{redis_db}"
+    # Celery broker… this is what your worker/upgrade uses
+    BROKER_URL = "redis://{cred}{host}:{port}/{db}".format(
+        cred=(REDIS_PWD + "@") if REDIS_PWD else "",
+        host=REDIS_HOST,
+        port=REDIS_PORT,
+        db=REDIS_DB,
+    )
 
 
 ###############
