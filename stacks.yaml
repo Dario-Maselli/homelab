@@ -42,11 +42,11 @@ stacks:
       optional: true
       materialize: ".env"
 
-  - dir: sentry
-    compose: docker-compose.yaml
-    env:
-      backend: vault
-      secret_path: kv/homelab/sentry
-      data_key: env
-      optional: true
-      materialize: ".env"
+  # - dir: sentry
+  #   compose: docker-compose.yaml
+  #   env:
+  #     backend: vault
+  #     secret_path: kv/homelab/sentry
+  #     data_key: env
+  #     optional: true
+  #     materialize: ".env"
