@@ -261,7 +261,6 @@ SENTRY_OPTIONS["system.secret-key"] = secret_key
 SENTRY_USE_RELAY = True
 
 # Feature Flags
-SENTRY_FEATURES.update({
-    "organizations:codecov-integration": True,
-    "organizations:auto-enable-codecov": True,
-})
+
+# Enables the Codecov Coverage feature
+SENTRY_FEATURES['organizations:codecov-integration'] = True
