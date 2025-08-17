@@ -1,0 +1,70 @@
+services:
+  postgres:
+    volumes:
+      - "${SENTRY_DATA_DIR}/postgres:/var/lib/postgresql/data"
+
+  redis:
+    volumes:
+      - "${SENTRY_DATA_DIR}/redis:/data"
+
+  clickhouse:
+    volumes:
+      - "${SENTRY_DATA_DIR}/clickhouse:/var/lib/clickhouse"
+
+  kafka:
+    volumes:
+      - "${SENTRY_DATA_DIR}/kafka:/bitnami/kafka"
+
+  symbolicator:
+    volumes:
+      - "${SENTRY_DATA_DIR}/symbolicator:/data"
+
+  # Sentry app… read config from /etc/sentry … store filestore and caches under /data
+  sentry-upgrade:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  sentry-createuser:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  web:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  worker:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  cron:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  ingest-events:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data
+
+  post-process-forwarder:
+    environment:
+      SENTRY_CONF: /etc/sentry
+    volumes:
+      - ./sentry_config:/etc/sentry
+      - ${SENTRY_DATA_DIR}/data:/data

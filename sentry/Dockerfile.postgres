@@ -1,0 +1,18 @@
+# Build against a pinned major… bump deliberately when you choose
+ARG PG_MAJOR=17
+FROM postgres:${PG_MAJOR}
+
+# required for building extensions
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential git ca-certificates postgresql-server-dev-${PG_MAJOR} \
+ && git clone --depth 1 https://github.com/eulerto/wal2json.git /tmp/wal2json \
+ # ensure the correct headers/toolchain via pg_config
+ && make -C /tmp/wal2json PG_CONFIG=/usr/bin/pg_config \
+ && make -C /tmp/wal2json install PG_CONFIG=/usr/bin/pg_config \
+ # tidy up
+ && apt-get purge -y --auto-remove build-essential git postgresql-server-dev-${PG_MAJOR} \
+ && rm -rf /var/lib/apt/lists/* /tmp/wal2json
+
+# sensible defaults for Sentry
+# you can tweak in compose with `command:` if you like
