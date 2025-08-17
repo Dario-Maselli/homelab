@@ -91,7 +91,6 @@ SENTRY_OPTIONS["redis.clusters"] = {
 }
 
 
-
 # Keep these on Redis too
 SENTRY_RATELIMITER = "sentry.ratelimits.redis.RedisRateLimiter"
 SENTRY_BUFFER = "sentry.buffer.redis.RedisBuffer"
@@ -265,6 +264,17 @@ if "SENTRY_RUNNING_UWSGI" not in os.environ and len(secret_key) < 32:
 
 SENTRY_OPTIONS["system.secret-key"] = secret_key
 SENTRY_USE_RELAY = True
+
+# --- Kafka ---
+SENTRY_OPTIONS["kafka.clusters"] = {
+    "default": {
+        # Minimal, but sufficient for Sentry's producers
+        "bootstrap.servers": os.getenv("KAFKA_BOOTSTRAP", "kafka:9092"),
+        # Optional hardening knobs you can uncomment if needed:
+        # "message.max.bytes": 50000000,   # 50MB
+        # "socket.keepalive.enable": True,
+    }
+}
 
 # Feature Flags
 
