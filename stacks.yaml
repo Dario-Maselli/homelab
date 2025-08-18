@@ -51,14 +51,15 @@ stacks:
         filename: ".env" # name to write next to compose files
         fallback_global: false # if a stack has no fetched env, copy the watcher .env into the stack dir
 
-  - dir: sentry
-    compose: docker-compose.yaml
-    env:
-      backend: vault
-      secret_path: kv/homelab/sentry
-      data_key: env
-      optional: true
-      materialize:
-        enabled: true # force writing an env file next to each compose
-        filename: ".env" # name to write next to compose files
-        fallback_global: false # if a stack has no fetched env, copy the watcher .env into the stack dir
+
+  # - dir: sentry
+  #   compose: docker-compose.yaml
+  #   env:
+  #     backend: vault
+  #     secret_path: kv/homelab/sentry
+  #     data_key: env
+  #     optional: true
+  #     materialize:
+  #       enabled: true # force writing an env file next to each compose
+  #       filename: ".env" # name to write next to compose files
+  #       fallback_global: false # if a stack has no fetched env, copy the watcher .env into the stack dir
