@@ -1,326 +1,361 @@
-services:
-  # ---------- Kafka in KRaft mode (no Zookeeper) ----------
-  kafka:
-    image: bitnami/kafka:latest
-    environment:
-      KAFKA_ENABLE_KRAFT: "yes"
-      KAFKA_PROCESS_ROLES: "controller,broker"
-      KAFKA_CFG_NODE_ID: "1"
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
-      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
-      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
-      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
-    healthcheck:
-      test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 30s
-    volumes:
-      - kafka:/bitnami/kafka
+name: sentry
 
-  # ---------- Redis ----------
+x-sentry-image: &sentry_image "getsentry/sentry:latest"
+x-clickhouse-image: &clickhouse_image "clickhouse/clickhouse-server:24.8.14"
+x-snuba-image:  &snuba_image  "getsentry/snuba:latest"
+x-sym-image:    &sym_image    "getsentry/symbolicator:latest"
+
+networks:
+  sentry_net:
+    name: sentry_net
+    driver: bridge
+
+volumes:
+  snuba_state:
+  clickhouse-data: {}
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sentry
+      POSTGRES_PASSWORD: sentry
+      POSTGRES_DB: sentry
+    volumes:
+      - "${SENTRY_DATA_DIR}/postgres:/var/lib/postgresql/data"
+    networks:
+      sentry_net:
+        aliases: [postgres]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentry -d sentry"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
   redis:
     image: redis:latest
-    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - "${SENTRY_DATA_DIR}/redis:/data"
+    networks:
+      sentry_net:
+        aliases: [redis]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
-      retries: 20
-    volumes:
-      - redis:/data
+      retries: 60
 
-  # ---------- Postgres with wal2json ----------
-  postgres:
-    build:
-      context: .
-      dockerfile: Dockerfile.postgres
-      args:
-        PG_MAJOR: "17"   # change only when you want to upgrade
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
-    # enable logical decoding and give Sentry some headroom
-    command:
-      - "postgres"
-      - "-c"
-      - "wal_level=logical"
-      - "-c"
-      - "max_wal_senders=10"
-      - "-c"
-      - "max_replication_slots=10"
-      - "-c"
-      - "max_connections=200"
-      - "-c"
-      - "shared_buffers=512MB"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-    volumes:
-      - postgres:/var/lib/postgresql/data
-
-  # ---------- ClickHouse for Snuba ----------
   clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    environment:
-      CLICKHOUSE_DB: default
-      CLICKHOUSE_USER: snuba
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    image: *clickhouse_image
+    restart: unless-stopped
     ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
+      nofile: { soft: 262144, hard: 262144 }
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      sentry_net:
+        aliases: [clickhouse]
     healthcheck:
-      test: ["CMD-SHELL", "clickhouse-client --query='SELECT 1'"]
+      test: ["CMD-SHELL", "clickhouse-client -u ${CLICKHOUSE_USER:-default} --password ${CLICKHOUSE_PASSWORD:-} --query='SELECT 1' >/dev/null 2>&1 || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 30
-    volumes:
-      - clickhouse:/var/lib/clickhouse
+      retries: 60
 
-  # ---------- Snuba ----------
+  kafka:
+    image: bitnami/kafka:latest
+    restart: unless-stopped
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
+    volumes:
+      - "${SENTRY_DATA_DIR}/kafka:/bitnami/kafka"
+    networks: [sentry_net]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
   snuba-api:
-    image: getsentry/snuba:latest
-    depends_on:
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
-    command: ["api"]
+    image: *snuba_image
+    restart: unless-stopped
     environment:
       SNUBA_SETTINGS: docker
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: "9000"
+      CLICKHOUSE_HTTP_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
       REDIS_HOST: redis
-      KAFKA_BROKERS: kafka:9092
-      CLICKHOUSE_USER: snuba
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      REDIS_PORT: "6379"
+      DEFAULT_BROKERS: kafka:9092
+    depends_on:
+      clickhouse: { condition: service_healthy }
+      kafka:      { condition: service_healthy }
+      redis:      { condition: service_healthy }
+    command: ["api"]
+    networks: [sentry_net]
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:1218/health || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:1218/health | grep -qi ok"]
       interval: 10s
       timeout: 5s
       retries: 30
-
-  snuba-consumer:
-    image: getsentry/snuba:latest
-    depends_on:
-      snuba-api:
-        condition: service_healthy
-    command: ["consumer", "--storage", "events", "--auto-offset-reset=latest"]
+      start_period: 30s
+  snuba-init:
+    image: *snuba_image
     environment:
       SNUBA_SETTINGS: docker
-      CLICKHOUSE_HOST: clickhouse
-      CLICKHOUSE_PORT: "9000" 
-      REDIS_HOST: redis
-      KAFKA_BROKERS: kafka:9092
-      CLICKHOUSE_USER: snuba
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-
-  snuba-transactions:
-    image: getsentry/snuba:latest
-    depends_on:
-      snuba-api:
-        condition: service_healthy
-    command: ["consumer", "--storage", "transactions", "--auto-offset-reset=latest"]
-    environment:
-      SNUBA_SETTINGS: docker
-      CLICKHOUSE_HOST: clickhouse
-      REDIS_HOST: redis
-      KAFKA_BROKERS: kafka:9092
-      CLICKHOUSE_PORT: "9000"
-      CLICKHOUSE_USER: snuba
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-
-  snuba-replacer:
-    image: getsentry/snuba:latest
-    depends_on:
-      snuba-api:
-        condition: service_healthy
-    command: ["replacer", "--storage", "events"]
-    environment:
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: "9000"
+      CLICKHOUSE_HTTP_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
       REDIS_HOST: redis
-      KAFKA_BROKERS: kafka:9092
-      CLICKHOUSE_USER: snuba
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-      SNUBA_SETTINGS: docker
-
-  # ---------- Symbolicator ----------
-  symbolicator:
-    image: getsentry/symbolicator:latest
-    environment:
-      RUST_LOG: actix_web=info,symbolicator=info
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3021/healthcheck"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
+      REDIS_PORT: "6379"
+      DEFAULT_BROKERS: kafka:9092
+    depends_on:
+      clickhouse: { condition: service_healthy }
+      kafka:      { condition: service_healthy }
+      redis:      { condition: service_healthy }
+      snuba-api:  { condition: service_healthy }
     volumes:
-      - symbolicator:/data
-
-  # ---------- One shot: migrations ----------
-  sentry-upgrade:
-    image: getsentry/sentry:latest
+      - ./snuba-init.sh:/opt/snuba-init.sh:ro
+    networks: [sentry_net]        # 👈 add this
+    entrypoint: ["/bin/bash","-lc","/opt/snuba-init.sh"]
     restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      clickhouse:
-        condition: service_healthy
-      snuba-api:
-        condition: service_healthy
-    environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_POSTGRES_PORT: "5432"
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      SENTRY_DB_NAME: ${POSTGRES_DB}
-      SENTRY_REDIS_HOST: redis
-      SENTRY_REDIS_PORT: "6379"
-      SENTRY_KAFKA_BROKERS: kafka:9092
-      SENTRY_SNUBA: http://snuba-api:1218
-    command: ["upgrade", "--noinput"]
 
-  # ---------- One shot: create the first superuser ----------
-  sentry-createuser:
-    image: getsentry/sentry:latest
-    restart: "no"
-    depends_on:
-      sentry-upgrade:
-        condition: service_completed_successfully
-    environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_POSTGRES_PORT: "5432"
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      SENTRY_DB_NAME: ${POSTGRES_DB}
-      SENTRY_REDIS_HOST: redis
-      SENTRY_REDIS_PORT: "6379"
-    command:
-      - "createuser"
-      - "--email"
-      - "${SENTRY_ADMIN_EMAIL}"
-      - "--password"
-      - "${SENTRY_ADMIN_PASSWORD}"
-      - "--superuser"
-      - "--no-input"
 
-  # ---------- Sentry web ----------
-  web:
-    image: getsentry/sentry:latest
+  snuba-consumers:
+    image: *snuba_image
+    restart: unless-stopped
     depends_on:
-      sentry-createuser:
-        condition: service_completed_successfully
-      symbolicator:
-        condition: service_started
+      snuba-init: { condition: service_completed_successfully }
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_SINGLE_ORGANIZATION: ${SENTRY_SINGLE_ORGANIZATION}
-      SENTRY_USE_BIG_INTS: "1"
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_POSTGRES_PORT: "5432"
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      SENTRY_DB_NAME: ${POSTGRES_DB}
-      SENTRY_REDIS_HOST: redis
-      SENTRY_REDIS_PORT: "6379"
-      SENTRY_KAFKA_BROKERS: kafka:9092
-      SENTRY_SNUBA: http://snuba-api:1218
-      SENTRY_SYMBOLICATOR_ENABLED: "true"
-      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
-      # SMTP… optional
-      SENTRY_EMAIL_HOST: ${SENTRY_EMAIL_HOST}
-      SENTRY_EMAIL_PORT: ${SENTRY_EMAIL_PORT}
-      SENTRY_EMAIL_USER: ${SENTRY_EMAIL_USER}
-      SENTRY_EMAIL_PASSWORD: ${SENTRY_EMAIL_PASSWORD}
-      SENTRY_SERVER_EMAIL: ${SENTRY_SERVER_EMAIL}
-      SENTRY_EMAIL_USE_TLS: ${SENTRY_EMAIL_USE_TLS}
+      SNUBA_SETTINGS: docker
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "9000"
+      CLICKHOUSE_HTTP_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-}
+      DEFAULT_BROKERS: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      DATABASE_URL: "postgresql://sentry:sentry@postgres:5432/sentry"
+    entrypoint: ["/bin/bash","-lc"]
+    command: |
+      set -euo pipefail
+      snuba consumer --storage errors         --consumer-group errors       --auto-offset-reset=latest &
+      snuba consumer --storage transactions   --consumer-group transactions --auto-offset-reset=latest &
+      snuba consumer --storage outcomes_raw   --consumer-group outcomes     --auto-offset-reset=latest &
+      snuba consumer --storage sessions_raw   --consumer-group sessions     --auto-offset-reset=latest &
+      snuba consumer --storage metrics        --consumer-group metrics      --auto-offset-reset=latest &
+      snuba replacer --storage errors         --consumer-group replacer     --auto-offset-reset=latest &
+      wait -n
+    networks: [sentry_net]
+
+  symbolicator:
+    image: *sym_image
+    restart: unless-stopped
+    command: ["run", "-c", "/etc/symbolicator/config.yml"] 
+    volumes:
+      - "${SENTRY_DATA_DIR}/symbolicator:/data"
+      - "./symbolicator_config/config.yml:/etc/symbolicator/config.yml:ro"  # file→file
     ports:
-      - "9000:9000"
+      - "3021:3021"
+    networks: [sentry_net]
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:9000/_health/"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3021/healthcheck"]
       interval: 10s
-      timeout: 5s
-      retries: 40
+      timeout: 3s
+      retries: 15
+      start_period: 15s
+
+
+  sentry-upgrade:
+    image: *sentry_image
+    depends_on:
+      postgres:   { condition: service_healthy }
+      redis:      { condition: service_healthy }
+      kafka:      { condition: service_healthy }
+      clickhouse: { condition: service_healthy }
+      snuba-init: { condition: service_completed_successfully }
+    environment:
+      SENTRY_CONF: /etc/sentry
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_DB_HOST: postgres
+      SENTRY_DB_PORT: "5432"
+      SENTRY_REDIS_HOST: redis
+      SENTRY_REDIS_PORT: "6379"
+      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+      DATABASE_URL: postgresql://sentry:sentry@postgres:5432/sentry
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    command: ["sentry", "upgrade", "--noinput"]
+    networks: [sentry_net]
+    restart: "no"
+
+  sentry-createuser:
+    image: *sentry_image
+    depends_on:
+      sentry-upgrade: { condition: service_completed_successfully }
+    environment:
+      SENTRY_CONF: /etc/sentry
+      SENTRY_ADMIN_EMAIL: ${SENTRY_ADMIN_EMAIL}
+      SENTRY_ADMIN_PASSWORD: ${SENTRY_ADMIN_PASSWORD}
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+    entrypoint: >
+      bash -lc '
+        set -e
+        if [ -n "${SENTRY_ADMIN_EMAIL}" ] && [ -n "${SENTRY_ADMIN_PASSWORD}" ]; then
+          sentry createuser --email "$SENTRY_ADMIN_EMAIL" --password "$SENTRY_ADMIN_PASSWORD" --superuser --no-input || true
+        else
+          echo "Skipping automatic superuser (SENTRY_ADMIN_EMAIL/PASSWORD not set)."
+        fi
+      '
+    networks: [sentry_net]
+    restart: "no"
+
+  web:
+    image: *sentry_image
+    depends_on:
+      sentry-upgrade:    { condition: service_completed_successfully }
+      sentry-createuser: { condition: service_completed_successfully }
+    environment:
+      SENTRY_CONF: /etc/sentry
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_DB_HOST: postgres
+      SENTRY_DB_PORT: "5432"
+      SENTRY_REDIS_HOST: redis
+      SENTRY_REDIS_PORT: "6379"
+      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_SINGLE_ORGANIZATION: "1"
+      SENTRY_DISABLE_VALIDATION: "1"
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+      DATABASE_URL: "postgresql://sentry:sentry@postgres:5432/sentry"
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    ports:
+      - "${SENTRY_BIND:-0.0.0.0:9000}:9000"
+    command: ["sentry", "run", "web"]
+    networks: [sentry_net]
+    restart: unless-stopped
 
   worker:
-    image: getsentry/sentry:latest
+    image: *sentry_image
     depends_on:
-      web:
-        condition: service_started
-    command: ["run", "worker"]
+      web: { condition: service_started }
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      SENTRY_DB_NAME: ${POSTGRES_DB}
+      SENTRY_CONF: /etc/sentry
+      SENTRY_DB_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_DB_PORT: "5432"
       SENTRY_REDIS_HOST: redis
+      SENTRY_REDIS_PORT: "6379"
       SENTRY_KAFKA_BROKERS: kafka:9092
-      SENTRY_SNUBA: http://snuba-api:1218
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+      DATABASE_URL: "postgresql://sentry:sentry@postgres:5432/sentry"
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    command: ["sentry", "run", "worker"]
+    networks: [sentry_net]
+    restart: unless-stopped
 
   cron:
-    image: getsentry/sentry:latest
+    image: *sentry_image
     depends_on:
-      web:
-        condition: service_started
-    command: ["run", "cron"]
+      web: { condition: service_started }
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_POSTGRES_HOST: postgres
-      SENTRY_DB_USER: ${POSTGRES_USER}
-      SENTRY_DB_PASSWORD: ${POSTGRES_PASSWORD}
-      SENTRY_DB_NAME: ${POSTGRES_DB}
+      SENTRY_CONF: /etc/sentry
+      SENTRY_DB_HOST: postgres
+      SENTRY_DB_USER: sentry
+      SENTRY_DB_PASSWORD: sentry
+      SENTRY_DB_NAME: sentry
+      SENTRY_DB_PORT: "5432"
       SENTRY_REDIS_HOST: redis
+      SENTRY_REDIS_PORT: "6379"
       SENTRY_KAFKA_BROKERS: kafka:9092
-      SENTRY_SNUBA: http://snuba-api:1218
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+      DATABASE_URL: "postgresql://sentry:sentry@postgres:5432/sentry"
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    command: ["sentry", "run", "cron"]
+    networks: [sentry_net]
+    restart: unless-stopped
 
-  # Keep Kafka moving… minimal set
-  ingest-events:
-    image: getsentry/sentry:latest
+  ingest-consumer:
+    image: *sentry_image
     depends_on:
-      web:
-        condition: service_started
-    command: ["run", "consumer", "ingest-events", "--all-consumer-types"]
+      web: { condition: service_started }
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_CONF: /etc/sentry
       SENTRY_REDIS_HOST: redis
-      SENTRY_SNUBA: http://snuba-api:1218
+      SENTRY_REDIS_PORT: "6379"
+      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+      DATABASE_URL: "postgresql://sentry:sentry@postgres:5432/sentry"
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    command: ["sentry", "run", "ingest-consumer", "--all-consumer-types"]
+    networks: [sentry_net]
+    restart: unless-stopped
 
   post-process-forwarder:
-    image: getsentry/sentry:latest
+    image: *sentry_image
     depends_on:
-      web:
-        condition: service_started
-    command: ["run", "post-process-forwarder", "--log-level=INFO", "--commit-batch-size", "1"]
+      web: { condition: service_started }
     environment:
-      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
-      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_CONF: /etc/sentry
       SENTRY_REDIS_HOST: redis
-      SENTRY_SNUBA: http://snuba-api:1218
-
-volumes:
-  postgres:
-  redis:
-  clickhouse:
-  kafka:
-  symbolicator:
+      SENTRY_REDIS_PORT: "6379"
+      SENTRY_KAFKA_BROKERS: kafka:9092
+      SENTRY_URL_PREFIX: ${SENTRY_URL_PREFIX:-http://localhost:9000}
+      SENTRY_SECRET_KEY: ${SENTRY_SECRET_KEY}
+      SENTRY_SNUBA_URL: http://snuba-api:1218
+      SENTRY_SYMBOLICATOR_URL: http://symbolicator:3021
+    volumes:
+      - ./sentry_config/config.yml:/etc/sentry/config.yml:ro
+      - "${SENTRY_DATA_DIR}/data:/data"
+    command: ["sentry", "run", "post-process-forwarder"]
+    networks: [sentry_net]
+    restart: unless-stopped
